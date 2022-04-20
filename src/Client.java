@@ -5,11 +5,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class Client {
 
-    private static int serverPort = 8080;
     private static int clientPort;
-    private static final String serverAddress = "localhost";
     private static DatagramSocket clientSocket;
-    static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
 
@@ -29,34 +26,16 @@ public class Client {
 
         // Initialise 3-way handshake
         Packet handshake1 = new Packet();
+        PacketHandler packetHandler = new PacketHandler();
         handshake1.setSourcePort((short) clientPort);
-        handshake1.setDestinationPort((short) serverPort);
+        handshake1.setDestinationPort((short) packetHandler.getServerPort());
         handshake1.setSynBit(true);
         handshake1.setSequenceNum(ThreadLocalRandom.current().nextInt(0,2147483647));
-        sendPacket(handshake1);
+        packetHandler.sendPacket(handshake1, clientSocket);
         System.out.println("Handshake 1/3");
 
     }
 
-    private static void sendPacket(Packet packet) {
-        byte[] buffer = packet.toByteArray();
-        DatagramPacket datagramPacket;
-
-        // Initialise datagram packet to be sent to server
-        try {
-            datagramPacket = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(serverAddress), serverPort);
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        // Send the packet to the server
-        try {
-            clientSocket.send(datagramPacket);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
 //    private static void startSender(int port) {
 //        new Thread(() -> {
