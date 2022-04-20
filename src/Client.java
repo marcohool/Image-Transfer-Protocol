@@ -30,7 +30,6 @@ public class Client {
         handshake1.setSynBit(true);
         handshake1.setSequenceNum(ThreadLocalRandom.current().nextInt(0,2147483647));
         packetHandler.sendPacket(handshake1, clientSocket);
-        System.out.println("Handshake 1/3");
 
         // Start listener and wait for response from server
         startListener();
@@ -43,6 +42,9 @@ public class Client {
             // Read datagram packets
             while (true) {
                 Packet receivedPacket = packetHandler.receivePacket(clientSocket);
+                // If server responds with ack = true, ack_num = 1, other flags = 0, ackNumb = receivedPacket seqNum + 1
+
+
             }
 
         }).start();

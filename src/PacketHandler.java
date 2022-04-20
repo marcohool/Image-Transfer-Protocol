@@ -53,7 +53,6 @@ public class PacketHandler {
             System.out.println("Syn bit: " + receivedPacket.isSynBit());
             System.out.println("Fin bit: " + receivedPacket.isFinBit());
             System.out.println("Data : " + Arrays.toString(receivedPacket.getData()));
-            System.out.println("\n");
         } catch (IOException e) {
             e.printStackTrace();
         }

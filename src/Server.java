@@ -33,9 +33,9 @@ public class Server {
             while (true) {
                 Packet receivedPacket = packetHandler.receivePacket(serverSocket);
 
-                // If packet is initiating 3-way handshake (syn bit = true & data = null)
-                if (receivedPacket.isSynBit() && receivedPacket.getData() == null) {
-                    System.out.println("1/3");
+                // If packet is initiating 3-way handshake (syn bit = true, all other flags are false & data = null)
+                if (receivedPacket.isSynBit() && !receivedPacket.isAckBit() && !receivedPacket.isFinBit() && receivedPacket.getData() == null) {
+                    System.out.println("Handshake 1/3 completed");
                     // Send ack = true, syn = true, random synNum and ackNum = seqNum + 1
                     Packet handshake2 = new Packet();
                     handshake2.setSourcePort((short) port);
