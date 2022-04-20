@@ -102,35 +102,6 @@ public class Packet {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-//        byteArrayOutputStream.write(this.sequenceNum);
-//        byteArrayOutputStream.write(this.ackNumb);
-//
-//        // Convert boolean bit to int bytes (1 for true 0 for false)
-//        if (this.ackBit) {
-//            byteArrayOutputStream.write(1);
-//        } else {
-//            byteArrayOutputStream.write(0);
-//        }
-//        if (this.synBit) {
-//            byteArrayOutputStream.write(1);
-//        } else {
-//            byteArrayOutputStream.write(0);
-//        }
-//        if (this.finBit) {
-//            byteArrayOutputStream.write(1);
-//        } else {
-//            byteArrayOutputStream.write(0);
-//        }
-//
-////      Append data byte array
-//        try {
-//            if (this.data != null)
-//            byteArrayOutputStream.write(this.data);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
         return byteArrayOutputStream.toByteArray();
     }
 
