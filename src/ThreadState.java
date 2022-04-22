@@ -1,0 +1,5 @@
+public enum ThreadState {
+
+    AVAILABLE, HANDSHAKE_1_SENT, CONNECTION_ESTABLISHED
+
+}
