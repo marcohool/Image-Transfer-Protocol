@@ -2,18 +2,15 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Server {
 
     private static final int port = 8080;
     private static final PacketHandler packetHandler = new PacketHandler();
-    private static Scanner scanner = new Scanner(System.in);
-    private static HashMap<Short, ServerThread> openConnections = new HashMap<>();
+    //private static Scanner scanner = new Scanner(System.in);
+    private static HashMap<Short, ServerThread> openConnections = new HashMap<>(); // Key = source port, value = server thread
 
     public static void main(String[] args) {
 
@@ -28,6 +25,12 @@ public class Server {
 
         // Listen for incoming packets
         while (true) {
+            System.out.println("priting entrries");
+            for (Map.Entry<Short, ServerThread> entry : openConnections.entrySet()) {
+                System.out.println(entry.getKey().toString());
+            }
+            System.out.println("printing closed");
+
             Packet receivedPacket = packetHandler.receivePacket(serverSocket);
 
             // Check if thread is already assigned to client
@@ -43,6 +46,11 @@ public class Server {
                 // Handle packet
                 serverThread.handlePacket(receivedPacket);
             }
+
         }
+    }
+
+    public static void removeConnection(ServerThread thread) {
+        openConnections.remove(thread);
     }
 }

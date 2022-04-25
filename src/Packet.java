@@ -1,8 +1,6 @@
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class Packet {
@@ -16,7 +14,6 @@ public class Packet {
     private boolean synBit; // 4 bytes (converted to integer 1 or 0)
     private boolean finBit; // 4 bytes (converted to integer 1 or 0)
     private byte[] data; // Variable size
-    private int dataSegmentSize; // Size of data in bytes
 
     public Packet(short sourcePort, short destinationPort, int sequenceNum, int ackNumb, boolean ackBit, boolean synBit, boolean finBit, byte[] data) {
         this.sourcePort = sourcePort;
@@ -36,13 +33,17 @@ public class Packet {
 
     // Create populated packet from byteArray (used when packet is received from input stream)
     public Packet(byte[] byteArray) {
-        this.sourcePort =  ByteBuffer.wrap(Arrays.copyOfRange(byteArray, 0, 2)).getShort();
-        this.destinationPort = ByteBuffer.wrap(Arrays.copyOfRange(byteArray, 2, 4)).getShort();
-        this.sequenceNum = ByteBuffer.wrap(Arrays.copyOfRange(byteArray, 4, 8)).getInt();
-        this.ackNumb = ByteBuffer.wrap(Arrays.copyOfRange(byteArray, 8, 12)).getInt();
-        this.ackBit = (ByteBuffer.wrap(Arrays.copyOfRange(byteArray, 12, 16)).getInt() == 1);
-        this.synBit = (ByteBuffer.wrap(Arrays.copyOfRange(byteArray, 16, 20)).getInt() == 1);
-        this.finBit = (ByteBuffer.wrap(Arrays.copyOfRange(byteArray, 20, 24)).getInt() == 1);
+        byte[] trimmedByteArray = trimByteArray(byteArray);
+        this.sourcePort =  ByteBuffer.wrap(Arrays.copyOfRange(trimmedByteArray, 0, 2)).getShort();
+        this.destinationPort = ByteBuffer.wrap(Arrays.copyOfRange(trimmedByteArray, 2, 4)).getShort();
+        this.sequenceNum = ByteBuffer.wrap(Arrays.copyOfRange(trimmedByteArray, 4, 8)).getInt();
+        this.ackNumb = ByteBuffer.wrap(Arrays.copyOfRange(trimmedByteArray, 8, 12)).getInt();
+        this.ackBit = (ByteBuffer.wrap(Arrays.copyOfRange(trimmedByteArray, 12, 16)).getInt() == 1);
+        this.synBit = (ByteBuffer.wrap(Arrays.copyOfRange(trimmedByteArray, 16, 20)).getInt() == 1);
+        this.finBit = (ByteBuffer.wrap(Arrays.copyOfRange(trimmedByteArray, 20, 24)).getInt() == 1);
+        if (trimmedByteArray.length > 24) {
+            this.data = (Arrays.copyOfRange(byteArray, 24, byteArray.length));
+        }
     }
 
 
@@ -104,6 +105,17 @@ public class Packet {
         }
         return byteArrayOutputStream.toByteArray();
     }
+
+    private byte[] trimByteArray(byte[] array) {
+        int i = array.length - 1;
+        while (i >= 24 && array[i] == 0)
+        {
+            --i;
+        }
+
+        return Arrays.copyOf(array, i + 1);
+    }
+
 
     public void setSourcePort(short sourcePort) {
         this.sourcePort = sourcePort;
@@ -167,5 +179,9 @@ public class Packet {
 
     public byte[] getData() {
         return data;
+    }
+
+    public void setDataSegmentSize(int dataSegmentSize) {
+        this.data = new byte[dataSegmentSize];
     }
 }

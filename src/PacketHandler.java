@@ -37,7 +37,7 @@ public class PacketHandler {
     }
 
     public Packet receivePacket(DatagramSocket socket) {
-        byte[] buffer = new byte[512];
+        byte[] buffer = new byte[560]; // MAKE LENGTH THE MAXIMUM LENGTH A PACKET CAN BE
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
         Packet receivedPacket = new Packet();
 
@@ -53,6 +53,9 @@ public class PacketHandler {
             System.out.println("Syn bit: " + receivedPacket.isSynBit());
             System.out.println("Fin bit: " + receivedPacket.isFinBit());
             System.out.println("Data : " + Arrays.toString(receivedPacket.getData()));
+            if (receivedPacket.getData() != null) {
+                System.out.println("Data Segment Length: " + receivedPacket.getData().length);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
