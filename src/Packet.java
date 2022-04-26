@@ -6,13 +6,13 @@ import java.util.Arrays;
 public class Packet {
 
     // 24 bytes + data
-    private short sourcePort; // 2 bytes
-    private short destinationPort; // 2 bytes
-    private int sequenceNum; // 4 bytes (max value 2147483647)
-    private int ackNumb; // 4 bytes
-    private boolean ackBit; // 4 bytes (converted to integer 1 or 0)
-    private boolean synBit; // 4 bytes (converted to integer 1 or 0)
-    private boolean finBit; // 4 bytes (converted to integer 1 or 0)
+    private final short sourcePort; // 2 bytes
+    private final short destinationPort; // 2 bytes
+    private final int sequenceNum; // 4 bytes (max value 2147483647)
+    private final int ackNumb; // 4 bytes
+    private final boolean ackBit; // 4 bytes (converted to integer 1 or 0)
+    private final boolean synBit; // 4 bytes (converted to integer 1 or 0)
+    private final boolean finBit; // 4 bytes (converted to integer 1 or 0)
     private byte[] data; // Variable size
 
     public Packet(short sourcePort, short destinationPort, int sequenceNum, int ackNumb, boolean ackBit, boolean synBit, boolean finBit, byte[] data) {
@@ -116,39 +116,6 @@ public class Packet {
         return Arrays.copyOf(array, i + 1);
     }
 
-
-    public void setSourcePort(short sourcePort) {
-        this.sourcePort = sourcePort;
-    }
-
-    public void setSynBit(boolean synBit) {
-        this.synBit = synBit;
-    }
-
-    public void setDestinationPort(short destinationPort) {
-        this.destinationPort = destinationPort;
-    }
-
-    public void setAckNumb(int ackNumb) {
-        this.ackNumb = ackNumb;
-    }
-
-    public void setAckBit(boolean ackBit) {
-        this.ackBit = ackBit;
-    }
-
-    public void setFinBit(boolean finBit) {
-        this.finBit = finBit;
-    }
-
-    public void setData(byte[] data) {
-        this.data = data;
-    }
-
-    public void setSequenceNum(int sequenceNum) {
-        this.sequenceNum = sequenceNum;
-    }
-
     public short getSourcePort() {
         return sourcePort;
     }
@@ -179,9 +146,5 @@ public class Packet {
 
     public byte[] getData() {
         return data;
-    }
-
-    public void setDataSegmentSize(int dataSegmentSize) {
-        this.data = new byte[dataSegmentSize];
     }
 }

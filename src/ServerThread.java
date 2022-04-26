@@ -22,21 +22,14 @@ public class ServerThread{
 
     public void handlePacket(Packet packet) {
         new Thread(() -> {
+            PacketHandler packetHandler = new PacketHandler();
 
             // If thread is available and packet is initiating 3-way handshake (syn bit = true, all other flags are false & data = null)
             if (state == ThreadState.LISTEN) {
                 if (packet.isSynBit() && !packet.isAckBit() && !packet.isFinBit() && packet.getData() == null) {
                     System.out.println("Handshake 1/3 completed");
                     // Send ack = true, syn = true, random synNum and ackNum = seqNum + 1
-                    Packet handshake2 = new Packet();
-                    handshake2.setSourcePort((short) serverPort);
-                    handshake2.setDestinationPort(packet.getSourcePort());
-                    handshake2.setAckBit(true);
-                    handshake2.setSynBit(true);
-                    handshake2.setSequenceNum(ThreadLocalRandom.current().nextInt(0,2147483647));
-                    handshake2.setAckNumb(packet.getSequenceNum()+1);
-                    // Send packet
-                    PacketHandler packetHandler = new PacketHandler();
+                    Packet handshake2 = new Packet((short) serverPort, packet.getSourcePort(), ThreadLocalRandom.current().nextInt(0,2147483647), packet.getSequenceNum()+1, true, true, false, new byte[0]);
                     packetHandler.sendPacket(handshake2, serverSocket);
                     lastPacketSent = handshake2;
                     // Update thread state
@@ -48,8 +41,7 @@ public class ServerThread{
             }
 
             if (this.state == ThreadState.SYN_SENT ) {
-                if (packet.isAckBit() && !packet.isFinBit() && !packet.isSynBit()
-                        && packet.getSequenceNum() == lastPacketSent.getAckNumb() && packet.getAckNumb() == lastPacketSent.getSequenceNum() + 1) {
+                if (packet.isAckBit() && !packet.isFinBit() && !packet.isSynBit() && packet.getSequenceNum() == lastPacketSent.getAckNumb() && packet.getAckNumb() == lastPacketSent.getSequenceNum() + 1) {
                     this.state = ThreadState.ESTABLISHED;
                     System.out.println("HANDSHAKE 3/3");
 
@@ -60,7 +52,7 @@ public class ServerThread{
                     fullImageByteArray = getImageByteArray(packetDataSize);
 
                     // Send first byte of image
-                    sendImagePacket(packet);
+                    sendImagePacket(packet, packetHandler);
 
                     return;
                 } else {
@@ -80,20 +72,12 @@ public class ServerThread{
                         // Send next packet
                         // If not all packets have been sent
                         if (!(packetsSent >= fullImageByteArray.length)) {
-                            sendImagePacket(packet);
+                            sendImagePacket(packet, packetHandler);
                         } else {
                             // All image data packets have been sent
-                            System.out.println("All packets sent");
                             // Send FIN bit
                             this.state = ThreadState.FIN_WAIT_1;
-                            Packet finPacket = new Packet();
-                            finPacket.setSourcePort((short) serverPort);
-                            finPacket.setDestinationPort(lastPacketSent.getDestinationPort());
-                            finPacket.setSequenceNum(lastPacketSent.getAckNumb());
-                            finPacket.setAckNumb(lastPacketSent.getSequenceNum()+1);
-                            finPacket.setFinBit(true);
-                            finPacket.setAckBit(true);
-                            PacketHandler packetHandler = new PacketHandler();
+                            Packet finPacket = new Packet((short) serverPort, lastPacketSent.getDestinationPort(), lastPacketSent.getAckNumb(), lastPacketSent.getSequenceNum()+1, true, false, true, new byte[0]);
                             packetHandler.sendPacket(finPacket, serverSocket);
                             lastPacketSent = finPacket;
                         }
@@ -119,14 +103,7 @@ public class ServerThread{
             // Waiting for FIN
             if (this.state == ThreadState.FIN_WAIT_2) {
                 if (packet.isFinBit() && !packet.isSynBit() && packet.isAckBit() && packet.getData() == null) {
-                    Packet finAck = new Packet();
-                    PacketHandler packetHandler = new PacketHandler();
-                    finAck.setSourcePort((short) serverPort);
-                    finAck.setDestinationPort(lastPacketSent.getDestinationPort());
-                    finAck.setAckBit(true);
-                    finAck.setFinBit(true);
-                    finAck.setSequenceNum(packet.getAckNumb());
-                    finAck.setAckNumb(packet.getSequenceNum() + 1);
+                    Packet finAck = new Packet((short) serverPort, lastPacketSent.getDestinationPort(), packet.getAckNumb(), packet.getSequenceNum() + 1, true, false, true, new byte[0]);
                     packetHandler.sendPacket(finAck, serverSocket);
                     this.state = ThreadState.CLOSED;
                 } else {
@@ -143,20 +120,11 @@ public class ServerThread{
         }).start();
     }
 
-    private void sendImagePacket(Packet previousPacket) {
-        Packet imagePacket = new Packet();
-        imagePacket.setAckBit(true);
-        imagePacket.setSourcePort((short) serverPort);
-        imagePacket.setDestinationPort(previousPacket.getSourcePort());
-        imagePacket.setSequenceNum(previousPacket.getAckNumb());
-        imagePacket.setAckNumb(previousPacket.getSequenceNum());
-        imagePacket.setDataSegmentSize(packetDataSize);
-        imagePacket.setData(fullImageByteArray[packetsSent]);
+    private void sendImagePacket(Packet previousPacket, PacketHandler handler) {
+        Packet imagePacket = new Packet((short) serverPort, previousPacket.getSourcePort(), previousPacket.getAckNumb(), previousPacket.getSequenceNum(), true, false, false, fullImageByteArray[packetsSent]);
         lastPacketSent = imagePacket;
-        PacketHandler packetHandler = new PacketHandler();
-        packetHandler.sendPacket(imagePacket, serverSocket);
+        handler.sendPacket(imagePacket, serverSocket);
         packetsSent++;
-
     }
 
     private byte[][] getImageByteArray(int bytesPerPacket) {

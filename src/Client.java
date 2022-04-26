@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Client {
@@ -16,7 +15,6 @@ public class Client {
     private static int clientPort;
     private static final PacketHandler packetHandler = new PacketHandler();
     static ArrayList<Byte> imageBytes = new ArrayList<>();
-    private static int sequenceNumber;
 
     public static void main(String[] args) {
 
@@ -34,11 +32,7 @@ public class Client {
         }
 
         // Initialise 3-way handshake
-        Packet handshake1 = new Packet();
-        handshake1.setSourcePort((short) clientPort);
-        handshake1.setDestinationPort((short) packetHandler.getServerPort());
-        handshake1.setSynBit(true);
-        handshake1.setSequenceNum(ThreadLocalRandom.current().nextInt(0,2147483647));
+        Packet handshake1 = new Packet((short) clientPort, (short) packetHandler.getServerPort(), ThreadLocalRandom.current().nextInt(0,2147483647), 0, false, true, false, new byte[0]);
         packetHandler.sendPacket(handshake1, clientSocket);
 
         // Start listener and wait for response from server
@@ -52,16 +46,11 @@ public class Client {
             // Read datagram packets
             while (true) {
                 Packet receivedPacket = packetHandler.receivePacket(clientSocket);
+
                 // If server responds with ack = true, ack_num = 1, other flags = 0, ackNumb = receivedPacket seqNum + 1
                 if (receivedPacket.isAckBit() && receivedPacket.isSynBit() && !receivedPacket.isFinBit() && receivedPacket.getData() == null) {
                     System.out.println("Handshake 2/3 completed");
-                    Packet handshake3 = new Packet();
-                    handshake3.setAckBit(true);
-                    handshake3.setSequenceNum(receivedPacket.getAckNumb());
-                    handshake3.setAckNumb(receivedPacket.getSequenceNum() + 1);
-
-                    handshake3.setSourcePort((short) clientPort);
-                    handshake3.setDestinationPort((short) packetHandler.getServerPort());
+                    Packet handshake3 = new Packet((short) clientPort, (short) packetHandler.getServerPort(), receivedPacket.getAckNumb(), receivedPacket.getSequenceNum() + 1, true, false, false, new byte[0]);
                     packetHandler.sendPacket(handshake3, clientSocket);
 
                 }
@@ -72,13 +61,7 @@ public class Client {
                         imageBytes.add(b);
                     }
                     // Reply with ACK
-                    Packet ack = new Packet();
-                    ack.setSourcePort((short) clientPort);
-                    ack.setDestinationPort((short) packetHandler.getServerPort());
-                    ack.setAckBit(true);
-                    sequenceNumber = receivedPacket.getAckNumb();
-                    ack.setSequenceNum(sequenceNumber);
-                    ack.setAckNumb(receivedPacket.getSequenceNum() + receivedPacket.getData().length);
+                    Packet ack = new Packet((short) clientPort, (short) packetHandler.getServerPort(), receivedPacket.getAckNumb(), receivedPacket.getSequenceNum() + receivedPacket.getData().length, true, false, false, new byte[0]);
                     packetHandler.sendPacket(ack, clientSocket);
                 }
 
@@ -89,26 +72,18 @@ public class Client {
                     for (int i = 0; i < imageBytes.size(); i++) {
                         imageBytesArray[i] = imageBytes.get(i);
                     }
+
                     // Send finACK
-                    PacketHandler packetHandler = new PacketHandler();
-                    Packet finAck = new Packet();
-                    finAck.setSourcePort((short) clientPort);
-                    finAck.setDestinationPort((short) packetHandler.getServerPort());
-                    finAck.setAckBit(true);
-                    finAck.setSequenceNum(receivedPacket.getAckNumb());
-                    finAck.setAckNumb(receivedPacket.getSequenceNum());
+                    Packet finAck = new Packet((short) clientPort, (short) packetHandler.getServerPort(), receivedPacket.getAckNumb(), receivedPacket.getSequenceNum(), true, false, false, new byte[0]);
                     packetHandler.sendPacket(finAck, clientSocket);
+
                     // Send fin bit
-                    Packet fin = new Packet();
-                    fin.setSourcePort((short) clientPort);
-                    fin.setDestinationPort((short) packetHandler.getServerPort());
-                    fin.setFinBit(true);
-                    fin.setAckBit(true);
-                    fin.setSequenceNum(receivedPacket.getSequenceNum());
-                    fin.setAckNumb(receivedPacket.getSequenceNum() + 1);
+                    Packet fin = new Packet((short) clientPort, (short) packetHandler.getServerPort(), receivedPacket.getSequenceNum(), receivedPacket.getSequenceNum() + 1, true, false, true, new byte[0]);
                     packetHandler.sendPacket(fin, clientSocket);
+
                     // Close connection
                     clientSocket.close();
+                    System.out.println("Connection closed");
                     break;
                 }
 
@@ -122,12 +97,15 @@ public class Client {
 
         InputStream inputStream = new ByteArrayInputStream(image);
 
-        BufferedImage img= null;
+        BufferedImage img;
         try {
+
             img = ImageIO.read(inputStream);
         } catch (IOException e) {
             e.printStackTrace();
+            return;
         }
+
         ImageIcon icon=new ImageIcon(img);
         JFrame frame=new JFrame();
         frame.setLayout(new FlowLayout());

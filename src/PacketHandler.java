@@ -4,13 +4,11 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.Scanner;
 
 public class PacketHandler {
 
     private static final String address = "localhost";
     private static final int serverPort = 8080;
-    static Scanner scanner = new Scanner(System.in);
 
     public PacketHandler() {
     }
@@ -21,7 +19,20 @@ public class PacketHandler {
 
         // Initialise datagram packet to be sent to server
         try {
-            System.out.println("Sending packet from " + packet.getSourcePort() + " to " + packet.getDestinationPort());
+            StringBuilder packetType = new StringBuilder();
+            if (packet.isAckBit()) {
+                packetType.append("ACK ");
+            }
+            if (packet.isSynBit()) {
+                packetType.append("SYN ");
+            }
+            if (packet.isFinBit()) {
+                packetType.append("FIN ");
+            }
+            if (packet.getData().length > 0) {
+                packetType.append("DATA ");
+            }
+            System.out.println("\n-- Sending " + packetType + "packet from " + packet.getSourcePort() + " to " + packet.getDestinationPort() + " --");
             datagramPacket = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(address), packet.getDestinationPort());
         } catch (UnknownHostException e) {
             e.printStackTrace();
