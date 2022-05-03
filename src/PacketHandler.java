@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -81,7 +82,9 @@ public class PacketHandler {
             for (byte b : receivedPacket.toByteArray()) {
                 calculatedCheckSum += Byte.toUnsignedInt(b);
             }
-            calculatedCheckSum -= Byte.toUnsignedInt((byte) receivedPacket.getCheckSum());
+            for (byte b : (BigInteger.valueOf(receivedPacket.getCheckSum())).toByteArray()) {
+                calculatedCheckSum -= Byte.toUnsignedInt(b);
+            }
             System.out.println("Calc check sum = " + calculatedCheckSum);
 
             // Set if checksum is correct
