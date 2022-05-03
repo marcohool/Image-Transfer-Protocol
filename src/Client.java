@@ -78,7 +78,7 @@ public class Client {
                     packetHandler.sendPacket(finAck, clientSocket);
 
                     // Send fin bit
-                    Packet fin = new Packet((short) clientPort, (short) packetHandler.getServerPort(), receivedPacket.getSequenceNum(), receivedPacket.getSequenceNum() + 1, true, false, true, new byte[0]);
+                    Packet fin = new Packet((short) clientPort, (short) packetHandler.getServerPort(), receivedPacket.getAckNumb(), receivedPacket.getSequenceNum() + 1, true, false, true, new byte[0]);
                     packetHandler.sendPacket(fin, clientSocket);
 
                     // Close connection
