@@ -14,10 +14,20 @@ public class PacketHandler {
     }
 
     public void sendPacket(Packet packet, DatagramSocket socket) {
-        byte[] buffer = packet.toByteArray();
-        DatagramPacket datagramPacket;
+        byte[] bufferWithoutChecksum = packet.toByteArray();
+        int checkSum = 0;
+
+        // Calculate checksum
+        for (byte b : bufferWithoutChecksum) {
+            checkSum += Byte.toUnsignedInt(b);
+        }
+        System.out.println(checkSum);
+        // Write checksum to packet and convert to byte array with checksum included
+        packet.setCheckSum(checkSum);
+        byte[] bufferWithChecksum = packet.toByteArray();
 
         // Initialise datagram packet to be sent to server
+        DatagramPacket datagramPacket;
         try {
             StringBuilder packetType = new StringBuilder();
             if (packet.isAckBit()) {
@@ -33,7 +43,7 @@ public class PacketHandler {
                 packetType.append("DATA ");
             }
             System.out.println("\n-- Sending " + packetType + "packet from " + packet.getSourcePort() + " to " + packet.getDestinationPort() + " --");
-            datagramPacket = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(address), packet.getDestinationPort());
+            datagramPacket = new DatagramPacket(bufferWithChecksum, bufferWithChecksum.length, InetAddress.getByName(address), packet.getDestinationPort());
         } catch (UnknownHostException e) {
             e.printStackTrace();
             return;
@@ -63,10 +73,21 @@ public class PacketHandler {
             System.out.println("Ack bit: " + receivedPacket.isAckBit());
             System.out.println("Syn bit: " + receivedPacket.isSynBit());
             System.out.println("Fin bit: " + receivedPacket.isFinBit());
+            System.out.println("Check sum: " + receivedPacket.getCheckSum());
             System.out.println("Data : " + Arrays.toString(receivedPacket.getData()));
-            if (receivedPacket.getData() != null) {
-                System.out.println("Data Segment Length: " + receivedPacket.getData().length);
+
+            // Calculate checksum
+            int calculatedCheckSum = 0;
+            for (byte b : receivedPacket.toByteArray()) {
+                calculatedCheckSum += Byte.toUnsignedInt(b);
             }
+            calculatedCheckSum -= Byte.toUnsignedInt((byte) receivedPacket.getCheckSum());
+            System.out.println("Calc check sum = " + calculatedCheckSum);
+
+            // Set if checksum is correct
+            receivedPacket.setCheckSumCorrect(calculatedCheckSum == receivedPacket.getCheckSum());
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }

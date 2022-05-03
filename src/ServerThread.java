@@ -6,6 +6,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class ServerThread{
 
     public static int packetSize = 1024;
+    public static int headerSize = 28;
 
     private ThreadState state;
     private final DatagramSocket serverSocket;
@@ -14,7 +15,6 @@ public class ServerThread{
     private Packet lastPacketSent;
     private int packetsSent = 0;
     private byte[][] fullImageByteArray;
-    //private final int packetDataSize = 1024;
 
     public ServerThread(DatagramSocket serverSocket, int serverPort) {
         this.state = ThreadState.LISTEN;
@@ -25,6 +25,12 @@ public class ServerThread{
     public void handlePacket(Packet packet) {
         new Thread(() -> {
             PacketHandler packetHandler = new PacketHandler();
+
+            // If checksum is incorrect (lost data in transmission)
+            if (!packet.isCheckSumCorrect()) {
+                System.out.println("Incorrect checksum, waiting for re-transmission of packet");
+                return;
+            }
 
             // If thread is available and packet is initiating 3-way handshake (syn bit = true, all other flags are false & data = null)
             if (state == ThreadState.LISTEN) {
@@ -51,7 +57,7 @@ public class ServerThread{
 
                     // Ready to start sending data
                     // Get image and split it into byte arrays
-                    fullImageByteArray = getImageByteArray(packetSize-24); // 24 is size of header without data
+                    fullImageByteArray = getImageByteArray(packetSize-headerSize);
 
                     // Send first byte of image
                     sendImagePacket(packet, packetHandler);

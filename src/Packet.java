@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 public class Packet {
 
-    // 24 bytes + data
+    // 28 bytes + data
     private final short sourcePort; // 2 bytes
     private final short destinationPort; // 2 bytes
     private final int sequenceNum; // 4 bytes (max value 2147483647)
@@ -13,7 +13,9 @@ public class Packet {
     private final boolean ackBit; // 4 bytes (converted to integer 1 or 0)
     private final boolean synBit; // 4 bytes (converted to integer 1 or 0)
     private final boolean finBit; // 4 bytes (converted to integer 1 or 0)
+    private int checkSum = 0; // 4 bytes
     private byte[] data; // Variable size
+    private boolean checkSumCorrect;
 
     public Packet(short sourcePort, short destinationPort, int sequenceNum, int ackNumb, boolean ackBit, boolean synBit, boolean finBit, byte[] data) {
         this.sourcePort = sourcePort;
@@ -41,8 +43,9 @@ public class Packet {
         this.ackBit = (ByteBuffer.wrap(Arrays.copyOfRange(trimmedByteArray, 12, 16)).getInt() == 1);
         this.synBit = (ByteBuffer.wrap(Arrays.copyOfRange(trimmedByteArray, 16, 20)).getInt() == 1);
         this.finBit = (ByteBuffer.wrap(Arrays.copyOfRange(trimmedByteArray, 20, 24)).getInt() == 1);
-        if (trimmedByteArray.length > 24) {
-            this.data = (Arrays.copyOfRange(byteArray, 24, byteArray.length));
+        this.checkSum = (ByteBuffer.wrap(Arrays.copyOfRange(trimmedByteArray, 24, 28)).getInt());
+        if (trimmedByteArray.length > 28) {
+            this.data = (Arrays.copyOfRange(byteArray, 28, byteArray.length));
         }
     }
 
@@ -91,6 +94,10 @@ public class Packet {
             finBitBuffer.putInt(0);
         }
 
+        // 4 bytes to "checkSum"
+        ByteBuffer checkSumBuffer = ByteBuffer.allocate(4);
+        checkSumBuffer.putInt(this.checkSum);
+
         try {
             byteArrayOutputStream.write(sourcePortBuffer.array());
             byteArrayOutputStream.write(destPortBuffer.array());
@@ -99,7 +106,10 @@ public class Packet {
             byteArrayOutputStream.write(ackBitBuffer.array());
             byteArrayOutputStream.write(synBitBuffer.array());
             byteArrayOutputStream.write(finBitBuffer.array());
-            byteArrayOutputStream.write(this.data);
+            byteArrayOutputStream.write(checkSumBuffer.array());
+            if (this.data != null) {
+                byteArrayOutputStream.write(this.data);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -108,7 +118,7 @@ public class Packet {
 
     private byte[] trimByteArray(byte[] array) {
         int i = array.length - 1;
-        while (i >= 24 && array[i] == 0)
+        while (i >= 28 && array[i] == 0)
         {
             --i;
         }
@@ -144,7 +154,22 @@ public class Packet {
         return finBit;
     }
 
+    public int getCheckSum() { return this.checkSum; }
+
+    public void setCheckSum(int checkSum) {
+        this.checkSum = checkSum;
+    }
+
+    public boolean isCheckSumCorrect() {
+        return checkSumCorrect;
+    }
+
+    public void setCheckSumCorrect(boolean checkSumCorrect) {
+        this.checkSumCorrect = checkSumCorrect;
+    }
+
     public byte[] getData() {
         return data;
     }
+
 }

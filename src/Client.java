@@ -20,7 +20,6 @@ public class Client {
 
         // Initialise client port
         clientPort = ThreadLocalRandom.current().nextInt(0, 32767);
-        System.out.println("Client port: " + clientPort);
 
         // Initialise client socket
         try {
@@ -32,7 +31,7 @@ public class Client {
         }
 
         // Initialise 3-way handshake
-        Packet handshake1 = new Packet((short) clientPort, (short) packetHandler.getServerPort(), ThreadLocalRandom.current().nextInt(0,2147483647), 0, false, true, false, new byte[0]);
+        Packet handshake1 = new Packet((short) clientPort, (short) packetHandler.getServerPort(), ThreadLocalRandom.current().nextInt(0, 2147483647), 0, false, true, false, new byte[0]);
         packetHandler.sendPacket(handshake1, clientSocket);
 
         // Start listener and wait for response from server
@@ -46,6 +45,12 @@ public class Client {
             // Read datagram packets
             while (true) {
                 Packet receivedPacket = packetHandler.receivePacket(clientSocket);
+
+                // If checksum is incorrect (lost data in transmission)
+                if (!receivedPacket.isCheckSumCorrect()) {
+                    System.out.println("Incorrect checksum, waiting for re-transmission of packet");
+                    continue;
+                }
 
                 // If server responds with ack = true, ack_num = 1, other flags = 0, ackNumb = receivedPacket seqNum + 1
                 if (receivedPacket.isAckBit() && receivedPacket.isSynBit() && !receivedPacket.isFinBit() && receivedPacket.getData() == null) {
@@ -94,7 +99,9 @@ public class Client {
         }).start();
     }
 
-        private static void displayImage(byte[] image) {
+    private static void displayImage(byte[] image) {
+
+        System.out.println(image.length);
 
         InputStream inputStream = new ByteArrayInputStream(image);
 
@@ -107,11 +114,11 @@ public class Client {
             return;
         }
 
-        ImageIcon icon=new ImageIcon(img);
-        JFrame frame=new JFrame();
+        ImageIcon icon = new ImageIcon(img);
+        JFrame frame = new JFrame();
         frame.setLayout(new FlowLayout());
-        frame.setSize(500,500);
-        JLabel lbl=new JLabel();
+        frame.setSize(500, 500);
+        JLabel lbl = new JLabel();
         lbl.setIcon(icon);
         frame.add(lbl);
         frame.setVisible(true);
