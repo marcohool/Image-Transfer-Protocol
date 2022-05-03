@@ -61,6 +61,7 @@ public class Client {
                         imageBytes.add(b);
                     }
                     // Reply with ACK
+                    System.out.println(receivedPacket.getData().length);
                     Packet ack = new Packet((short) clientPort, (short) packetHandler.getServerPort(), receivedPacket.getAckNumb(), receivedPacket.getSequenceNum() + receivedPacket.getData().length, true, false, false, new byte[0]);
                     packetHandler.sendPacket(ack, clientSocket);
                 }

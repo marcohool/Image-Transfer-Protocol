@@ -48,7 +48,7 @@ public class PacketHandler {
     }
 
     public Packet receivePacket(DatagramSocket socket) {
-        byte[] buffer = new byte[560]; // MAKE LENGTH THE MAXIMUM LENGTH A PACKET CAN BE
+        byte[] buffer = new byte[ServerThread.packetSize]; // MAKE LENGTH THE MAXIMUM LENGTH A PACKET CAN BE
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
         Packet receivedPacket = new Packet();
 

@@ -5,6 +5,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class ServerThread{
 
+    public static int packetSize = 1024;
+
     private ThreadState state;
     private final DatagramSocket serverSocket;
     private final int serverPort;
@@ -12,7 +14,7 @@ public class ServerThread{
     private Packet lastPacketSent;
     private int packetsSent = 0;
     private byte[][] fullImageByteArray;
-    private final int packetDataSize = 536;
+    //private final int packetDataSize = 1024;
 
     public ServerThread(DatagramSocket serverSocket, int serverPort) {
         this.state = ThreadState.LISTEN;
@@ -49,7 +51,7 @@ public class ServerThread{
 
                     // Ready to start sending data
                     // Get image and split it into byte arrays
-                    fullImageByteArray = getImageByteArray(packetDataSize);
+                    fullImageByteArray = getImageByteArray(packetSize-24); // 24 is size of header without data
 
                     // Send first byte of image
                     sendImagePacket(packet, packetHandler);
@@ -68,6 +70,8 @@ public class ServerThread{
                     if (lastPacketSent.getData().length == 0) {
                         phantomByte = 1;
                     }
+                    int exp = lastPacketSent.getSequenceNum() + lastPacketSent.getData().length + phantomByte;
+                    System.out.println("expected ack numb = " + exp);
                     if (packet.getAckNumb() == lastPacketSent.getSequenceNum() + lastPacketSent.getData().length + phantomByte) {
                         // Send next packet
                         // If not all packets have been sent
@@ -127,12 +131,12 @@ public class ServerThread{
         packetsSent++;
     }
 
-    private byte[][] getImageByteArray(int bytesPerPacket) {
+    private byte[][] getImageByteArray(int bytesPerDataSegment) {
         FileInputStream fileInputStream;
-        File image = new File("assets/image.png");
+        File image = new File("assets/lpfcawayoflife.jpg");
         byte[] wholeImage = new byte[(int) image.length()];
-        int totPacketsToBeSent = (int) Math.ceil((double) wholeImage.length/bytesPerPacket);
-        byte[][] splitImageArray = new byte[totPacketsToBeSent][bytesPerPacket];
+        int totPacketsToBeSent = (int) Math.ceil((double) wholeImage.length/bytesPerDataSegment);
+        byte[][] splitImageArray = new byte[totPacketsToBeSent][bytesPerDataSegment];
 
         try {
             fileInputStream  = new FileInputStream(image);
@@ -142,7 +146,7 @@ public class ServerThread{
             return null;
         }
         for (int i = 0; i < totPacketsToBeSent; i++) {
-            splitImageArray[i] = Arrays.copyOfRange(wholeImage, i*bytesPerPacket,i*bytesPerPacket+bytesPerPacket);
+            splitImageArray[i] = Arrays.copyOfRange(wholeImage, i*bytesPerDataSegment,i*bytesPerDataSegment+bytesPerDataSegment);
         }
         return splitImageArray;
     }
