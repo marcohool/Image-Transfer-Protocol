@@ -22,7 +22,7 @@ public class PacketHandler {
         for (byte b : bufferWithoutChecksum) {
             checkSum += Byte.toUnsignedInt(b);
         }
-        System.out.println(checkSum);
+
         // Write checksum to packet and convert to byte array with checksum included
         packet.setCheckSum(checkSum);
         byte[] bufferWithChecksum = packet.toByteArray();
@@ -85,7 +85,6 @@ public class PacketHandler {
             for (byte b : (BigInteger.valueOf(receivedPacket.getCheckSum())).toByteArray()) {
                 calculatedCheckSum -= Byte.toUnsignedInt(b);
             }
-            System.out.println("Calc check sum = " + calculatedCheckSum);
 
             // Set if checksum is correct
             receivedPacket.setCheckSumCorrect(calculatedCheckSum == receivedPacket.getCheckSum());
