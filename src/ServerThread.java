@@ -139,7 +139,7 @@ public class ServerThread{
 
     private byte[][] getImageByteArray(int bytesPerDataSegment) {
         FileInputStream fileInputStream;
-        File image = new File("/user/HS400/mb02058/git/P2P-UDP-Image-Sharing/assets/lpfcawayoflife.jpg");
+        File image = new File("assets/lpfcawayoflife.jpg");
         byte[] wholeImage = new byte[(int) image.length()];
         int totPacketsToBeSent = (int) Math.ceil((double) wholeImage.length/bytesPerDataSegment);
         byte[][] splitImageArray = new byte[totPacketsToBeSent][bytesPerDataSegment];
@@ -147,14 +147,12 @@ public class ServerThread{
         try {
             fileInputStream  = new FileInputStream(image);
             fileInputStream.read(wholeImage);
-            fileInputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
         for (int i = 0; i < totPacketsToBeSent; i++) {
-            splitImageArray[i] = Arrays.copyOfRange(wholeImage, i * bytesPerDataSegment,
-                    i * bytesPerDataSegment + bytesPerDataSegment);
+            splitImageArray[i] = Arrays.copyOfRange(wholeImage, i*bytesPerDataSegment,i*bytesPerDataSegment+bytesPerDataSegment);
         }
         return splitImageArray;
     }

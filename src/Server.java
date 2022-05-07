@@ -1,6 +1,5 @@
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.util.*;
 
 public class Server {
@@ -23,7 +22,7 @@ public class Server {
         // Listen for incoming packets
         while (true) {
             Packet receivedPacket = packetHandler.receivePacket(serverSocket);
-            
+
             // Check if thread is already assigned to client
             if (openConnections.containsKey(receivedPacket.getSourcePort())) {
                 // Get thread to deal with packet
