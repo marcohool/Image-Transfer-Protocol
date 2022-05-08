@@ -101,11 +101,19 @@ public class Client {
                     Packet fin = new Packet((short) clientPort, (short) packetHandler.getServerPort(), receivedPacket.getAckNumb(), receivedPacket.getSequenceNum() + 1, true, false, true, new byte[0]);
                     packetHandler.sendPacket(fin, clientSocket);
 
+                    // Display server FIN ACK
+                    try {
+                        receivedPacket = packetHandler.receivePacket(clientSocket);
+                    } catch (SocketTimeoutException e) {
+                        e.printStackTrace();
+                    }
+
                     // Close connection
                     clientSocket.close();
-                    System.out.println("Connection closed");
+                    System.out.println("\nConnection closed");
                     break;
                 }
+
 
             }
             displayImage(imageBytesArray);
