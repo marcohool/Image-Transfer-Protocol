@@ -43,8 +43,14 @@ public class Client {
         new Thread(() -> {
             byte[] imageBytesArray;
             // Read datagram packets
+
             while (true) {
-                Packet receivedPacket = packetHandler.receivePacket(clientSocket);
+                Packet receivedPacket = null;
+                try {
+                    receivedPacket = packetHandler.receivePacket(clientSocket);
+                } catch (SocketTimeoutException e) {
+                    System.out.println("Timeout");
+                }
 
                 // If checksum is incorrect (lost data in transmission)
                 if (!receivedPacket.isCheckSumCorrect()) {

@@ -1,9 +1,6 @@
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.Arrays;
 
 public class PacketHandler {
@@ -49,7 +46,6 @@ public class PacketHandler {
             e.printStackTrace();
             return;
         }
-
         // Send the packet
         try {
             socket.send(datagramPacket);
@@ -58,10 +54,11 @@ public class PacketHandler {
         }
     }
 
-    public Packet receivePacket(DatagramSocket socket) {
+    public Packet receivePacket(DatagramSocket socket) throws SocketTimeoutException {
         byte[] buffer = new byte[ServerThread.packetSize]; // MAKE LENGTH THE MAXIMUM LENGTH A PACKET CAN BE
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
         Packet receivedPacket = new Packet();
+        int timeouts = 0;
 
         try {
             socket.receive(packet);
@@ -90,9 +87,16 @@ public class PacketHandler {
             receivedPacket.setCheckSumCorrect(calculatedCheckSum == receivedPacket.getCheckSum());
 
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (SocketTimeoutException e) {
+            // Timeout occurred - send signal to resend the packet
+            throw new SocketTimeoutException();
+
+        } catch (IOException ie) {
+            ie.printStackTrace();
         }
+
+        // If the packet received is a FIN bit we do not expect any more packets, therefore do not timeout
+        // Remove timeout as we are not expecting any more packets from the client
 
         return receivedPacket;
     }

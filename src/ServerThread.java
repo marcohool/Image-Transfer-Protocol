@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.DatagramSocket;
+import java.net.SocketException;
 import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -113,9 +114,12 @@ public class ServerThread{
             // Waiting for FIN
             if (this.state == ThreadState.FIN_WAIT_2) {
                 if (packet.isFinBit() && !packet.isSynBit() && packet.isAckBit() && packet.getData() == null) {
+
+
                     Packet finAck = new Packet((short) serverPort, lastPacketSent.getDestinationPort(), packet.getAckNumb(), packet.getSequenceNum() + 1, true, false, true, new byte[0]);
                     packetHandler.sendPacket(finAck, serverSocket);
                     this.state = ThreadState.CLOSED;
+
                 } else {
                     System.out.println("Expected FIN packet");
                 }
@@ -157,4 +161,12 @@ public class ServerThread{
         return splitImageArray;
     }
 
+    public ThreadState getState() {
+        return state;
+    }
+
+    public void resendLastPacket() {
+        PacketHandler handler = new PacketHandler();
+        handler.sendPacket(lastPacketSent, serverSocket);
+    }
 }
