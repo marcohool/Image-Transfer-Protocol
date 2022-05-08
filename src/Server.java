@@ -27,6 +27,7 @@ public class Server {
             try {
                 receivedPacket = packetHandler.receivePacket(serverSocket);
 
+
                 // Check if thread is already assigned to client
                 if (openConnections.containsKey(receivedPacket.getSourcePort())) {
                     // Get thread to deal with packet

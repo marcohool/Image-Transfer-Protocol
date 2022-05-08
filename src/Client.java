@@ -25,6 +25,7 @@ public class Client {
         try {
             clientSocket = new DatagramSocket(clientPort);
             clientSocket.setBroadcast(true);
+            clientSocket.setSoTimeout(2000);
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -43,13 +44,21 @@ public class Client {
         new Thread(() -> {
             byte[] imageBytesArray;
             // Read datagram packets
+            int timeouts = 0;
 
             while (true) {
-                Packet receivedPacket = null;
+                Packet receivedPacket;
                 try {
                     receivedPacket = packetHandler.receivePacket(clientSocket);
                 } catch (SocketTimeoutException e) {
-                    System.out.println("Timeout");
+                    timeouts += 1;
+                    System.out.println("Timeout occurred (" + timeouts + "/10) - Resending packet in transit");
+                    if (timeouts == 10) {
+                        System.out.println("Timeout limit reached - Closing connection");
+                        return;
+                    } else {
+                        continue;
+                    }
                 }
 
                 // If checksum is incorrect (lost data in transmission)
